@@ -35,7 +35,13 @@ using namespace STM32_LittleFS_Namespace;
 // ESP32 version
 #include "LittleFS.h"
 #define FSCom LittleFS
-#define FSBegin() FSCom.begin(true) // format on failure
+// The data partition's label. A dual-boot build (variants/esp32s3/t-deck, env t-deck-dualboot) sets it, so
+// this firmware keeps its files apart from the other firmware on the same flash: both would otherwise mount
+// "spiffs", each with its own filesystem, and format-on-failure would wipe the other's settings.
+#ifndef MESHTASTIC_FS_LABEL
+#define MESHTASTIC_FS_LABEL "spiffs"
+#endif
+#define FSBegin() FSCom.begin(true, "/littlefs", 10, MESHTASTIC_FS_LABEL) // format on failure
 #define FILE_O_WRITE "w"
 #define FILE_O_READ "r"
 #endif

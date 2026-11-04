@@ -2,6 +2,8 @@
 #include "PowerMon.h"
 #include "configuration.h"
 #include "esp_task_wdt.h"
+#include <esp_ota_ops.h>
+#include <esp_partition.h>
 #include "main.h"
 
 #if !defined(CONFIG_IDF_TARGET_ESP32S2) && !MESHTASTIC_EXCLUDE_BLUETOOTH
@@ -259,6 +261,14 @@ void enableSlowCLK()
 
 void esp32Setup()
 {
+#ifdef DUAL_BOOT_SELECTOR
+    // Dual boot with a selector in the factory partition: hand the next boot back to it, so every power-on
+    // offers the choice again. The selector passes a software restart (a settings change) straight through.
+    if (const esp_partition_t *selector = esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_FACTORY, NULL)) {
+        esp_err_t err = esp_ota_set_boot_partition(selector);
+        LOG_INFO("Dual boot: next boot goes to the selector (%s)", err == ESP_OK ? "ok" : esp_err_to_name(err));
+    }
+#endif
     /* We explicitly don't want to do call randomSeed,
     // as that triggers the esp32 core to use a less secure pseudorandom function.
     uint32_t seed = esp_random();
