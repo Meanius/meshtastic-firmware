@@ -66,11 +66,34 @@ static void saveLast(int index) {
   prefs.end();
 }
 
+static bool s_displayReady = false;   // the software-restart pass-through boots before the display init
+
 static void bootInto(int index) {
   esp_app_desc_t desc;
+  uint32_t t0 = millis();
   if (!slotHasApp(index, &desc)) return;
+  uint32_t t1 = millis();
   saveLast(index);
-  if (esp_ota_set_boot_partition(slotPartition(index)) == ESP_OK) {
+  uint32_t t2 = millis();
+  // The panel keeps its last picture through the restart until the firmware redraws it, seconds later:
+  // without this the menu looked frozen (first device test, 2026-11-10). Only when the display is up.
+  if (s_displayReady) {
+    tft.fillScreen(ST77XX_BLACK);
+    tft.setTextColor(ST77XX_WHITE);
+    tft.setTextSize(3);
+    tft.setCursor(10, 90);
+    tft.print(CHOICES[index].name);
+    tft.setTextSize(2);
+    tft.setCursor(10, 130);
+    tft.print("indul / starting...");
+  }
+  esp_err_t err = esp_ota_set_boot_partition(slotPartition(index));
+  uint32_t t3 = millis();
+  // Boot timing on the serial console (first device test, 2026-11-10: the menu froze for seconds after a pick).
+  Serial.printf("[selector] boot %s: check %lu ms, save %lu ms, set_boot_partition %lu ms (%s)\n", CHOICES[index].name,
+                (unsigned long)(t1 - t0), (unsigned long)(t2 - t1), (unsigned long)(t3 - t2), esp_err_to_name(err));
+  Serial.flush();
+  if (err == ESP_OK) {
     delay(50);
     esp_restart();
   }
@@ -107,6 +130,8 @@ static void drawMenu(int selected, uint32_t remainingMs, const bool *available, 
 }
 
 void setup() {
+  Serial.begin(115200);
+  Serial.printf("[selector] start %lu ms\n", (unsigned long)millis());
   esp_reset_reason_t reason = esp_reset_reason();
   int last = loadLast();
   esp_app_desc_t descs[CHOICE_COUNT];
@@ -132,6 +157,7 @@ void setup() {
   pinMode(PIN_TFT_BL, OUTPUT);
   digitalWrite(PIN_TFT_BL, HIGH);
   tft.init(240, 320);
+  s_displayReady = true;
   tft.setRotation(3);   // 1 drew the menu upside down on a T-Deck Plus (first device test, 2026-11-10)
 
   int selected = available[last] ? last : (available[0] ? 0 : 1);
