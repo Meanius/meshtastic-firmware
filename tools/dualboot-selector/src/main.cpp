@@ -132,7 +132,7 @@ void setup() {
   pinMode(PIN_TFT_BL, OUTPUT);
   digitalWrite(PIN_TFT_BL, HIGH);
   tft.init(240, 320);
-  tft.setRotation(1);
+  tft.setRotation(3);   // 1 drew the menu upside down on a T-Deck Plus (first device test, 2026-11-10)
 
   int selected = available[last] ? last : (available[0] ? 0 : 1);
   uint32_t start = millis(), lastDraw = 0;
