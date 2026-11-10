@@ -1,13 +1,17 @@
 # T-Deck dual boot (Meshtastic + WADAMESH): a selector in the factory partition, one app slot per firmware,
 # and one data partition per firmware. Must be the same table in both firmwares and the selector
 # (Meanius/wadamesh, branch dual-boot: variants/lilygo_tdeck/dualboot_16MB.csv).
-# mt_app 3 MB, mc_app 4 MB (WADAMESH does not fit 3 MB); the data partitions are where they were with MeshCore.
+# Sizes measured 2026-11-10 (slot = at least the image + 10%, rounded up to 64 KB, plus growth room):
+#   selector  301 360 B in 0x60000  (384 KB): 23% free
+#   mt_app    Meshtastic t-deck-tft-dualboot (MUI) 3 966 736 B in 0x480000 (4.5 MB): 16% free
+#   mc_app    WADAMESH 3 737 424 B in 0x440000 (4.25 MB): 16% free
+#   mt_fs / mc_fs 0x360000 (3.375 MB) each: the data partition size both firmwares ship with.
 # Name,   Type, SubType,  Offset,   Size,     Flags
 nvs,      data, nvs,      0x9000,   0x5000,
 otadata,  data, ota,      0xe000,   0x2000,
-selector, app,  factory,  0x10000,  0x100000,
-mt_app,   app,  ota_0,    0x110000, 0x300000,
-mc_app,   app,  ota_1,    0x410000, 0x400000,
-mt_fs,    data, spiffs,   0x810000, 0x400000,
-mc_fs,    data, spiffs,   0xC10000, 0x3E0000,
+selector, app,  factory,  0x10000,  0x60000,
+mt_app,   app,  ota_0,    0x70000,  0x480000,
+mc_app,   app,  ota_1,    0x4F0000, 0x440000,
+mt_fs,    data, spiffs,   0x930000, 0x360000,
+mc_fs,    data, spiffs,   0xC90000, 0x360000,
 coredump, data, coredump, 0xFF0000, 0x10000,
