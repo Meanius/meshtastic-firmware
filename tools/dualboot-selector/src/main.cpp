@@ -1,11 +1,11 @@
 // T-Deck dual-boot selector. Lives in the factory partition; both firmwares hand the next boot back
 // here at their start (DUAL_BOOT_SELECTOR), so every power-on comes here first.
 //
-// - Power-on, crash, brownout: a short menu, Meshtastic or MeshCore, the last choice preselected,
+// - Power-on, crash, brownout: a short menu, Meshtastic or WADAMESH, the last choice preselected,
 //   continuing with it after a countdown.
 // - Software restart or deep-sleep wake (a firmware rebooting itself, e.g. after a settings change):
 //   straight on to the last choice, no menu.
-// Keys: 1 / m = Meshtastic, 2 / c = MeshCore, Enter or trackball press = the highlighted one,
+// Keys: 1 / m = Meshtastic, 2 / w = WADAMESH, Enter or trackball press = the highlighted one,
 // trackball up/down = move. The trackball press is NOT usable at power-on itself: it is GPIO0, the
 // strapping pin, and held at reset it puts the chip into download mode.
 
@@ -18,7 +18,7 @@
 #include <esp_partition.h>
 #include <esp_system.h>
 
-// T-Deck pins (from the Meshtastic and MeshCore T-Deck variants)
+// T-Deck pins (from the Meshtastic and MeshCore/WADAMESH T-Deck variants)
 static const int PIN_POWER_ON = 10;   // peripherals, keyboard included
 static const int PIN_I2C_SDA = 18, PIN_I2C_SCL = 8;
 static const uint8_t KB_ADDR = 0x55;
@@ -35,7 +35,7 @@ struct Choice {
 };
 static const Choice CHOICES[] = {
   {"Meshtastic", ESP_PARTITION_SUBTYPE_APP_OTA_0},
-  {"MeshCore", ESP_PARTITION_SUBTYPE_APP_OTA_1},
+  {"WADAMESH", ESP_PARTITION_SUBTYPE_APP_OTA_1},
 };
 static const int CHOICE_COUNT = 2;
 
@@ -101,7 +101,7 @@ static void drawMenu(int selected, uint32_t remainingMs, const bool *available, 
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(1);
   tft.setCursor(10, 200);
-  tft.print("1/m, 2/c, Enter, trackball");
+  tft.print("1/m, 2/w, Enter, trackball");
   tft.setCursor(10, 215);
   tft.printf("Automatikusan: %s  %lus", CHOICES[selected].name, (unsigned long)((remainingMs + 999) / 1000));
 }
@@ -147,7 +147,7 @@ void setup() {
     int key = readKey();
     int pick = -1;
     if (key == '1' || key == 'm' || key == 'M') pick = 0;
-    else if (key == '2' || key == 'c' || key == 'C') pick = 1;
+    else if (key == '2' || key == 'w' || key == 'W') pick = 1;
     else if (key == '\r' || key == '\n') pick = selected;
     if (digitalRead(TB_PRESS) == LOW) pick = selected;
 
