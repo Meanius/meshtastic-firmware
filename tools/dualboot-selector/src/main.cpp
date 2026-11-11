@@ -5,9 +5,11 @@
 //   continuing with it after a countdown.
 // - Software restart or deep-sleep wake (a firmware rebooting itself, e.g. after a settings change):
 //   straight on to the last choice, no menu.
-// Keys: 1 / m = Meshtastic, 2 / w = WADAMESH, Enter or trackball press = the highlighted one,
+// Keys: m = Meshtastic, w = WADAMESH, Enter or trackball press = the highlighted one,
 // trackball up/down = move. The trackball press is NOT usable at power-on itself: it is GPIO0, the
 // strapping pin, and held at reset it puts the chip into download mode.
+// No digit keys: on the T-Deck keyboard the digits are alt layers of letters, and the 1 is printed on
+// the W key, so "1 = Meshtastic" next to "w = WADAMESH" put both on one key (first device test).
 
 #include <Arduino.h>
 #include <Wire.h>
@@ -32,10 +34,11 @@ static const uint32_t COUNTDOWN_MS = 5000;
 struct Choice {
   const char *name;
   esp_partition_subtype_t slot;
+  char key;   // shown in the menu; the key loop below matches it
 };
 static const Choice CHOICES[] = {
-  {"Meshtastic", ESP_PARTITION_SUBTYPE_APP_OTA_0},
-  {"WADAMESH", ESP_PARTITION_SUBTYPE_APP_OTA_1},
+  {"Meshtastic", ESP_PARTITION_SUBTYPE_APP_OTA_0, 'M'},
+  {"WADAMESH", ESP_PARTITION_SUBTYPE_APP_OTA_1, 'W'},
 };
 static const int CHOICE_COUNT = 2;
 
@@ -116,7 +119,7 @@ static void drawMenu(int selected, uint32_t remainingMs, const bool *available, 
     tft.setTextColor(available[i] ? ST77XX_WHITE : 0x7BEF);
     tft.setTextSize(3);
     tft.setCursor(15, y);
-    tft.printf("%d %s", i + 1, CHOICES[i].name);
+    tft.printf("%c %s", CHOICES[i].key, CHOICES[i].name);
     tft.setTextSize(1);
     tft.setCursor(17, y + 28);
     tft.print(available[i] ? descs[i].version : "(nincs telepitve / not installed)");
@@ -124,7 +127,7 @@ static void drawMenu(int selected, uint32_t remainingMs, const bool *available, 
   tft.setTextColor(ST77XX_WHITE);
   tft.setTextSize(1);
   tft.setCursor(10, 200);
-  tft.print("1/m, 2/w, Enter, trackball");
+  tft.print("M / W, Enter, trackball");
   tft.setCursor(10, 215);
   tft.printf("Automatikusan: %s  %lus", CHOICES[selected].name, (unsigned long)((remainingMs + 999) / 1000));
 }
@@ -172,8 +175,8 @@ void setup() {
 
     int key = readKey();
     int pick = -1;
-    if (key == '1' || key == 'm' || key == 'M') pick = 0;
-    else if (key == '2' || key == 'w' || key == 'W') pick = 1;
+    if (key == 'm' || key == 'M') pick = 0;
+    else if (key == 'w' || key == 'W') pick = 1;
     else if (key == '\r' || key == '\n') pick = selected;
     if (digitalRead(TB_PRESS) == LOW) pick = selected;
 

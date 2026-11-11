@@ -24,7 +24,7 @@ branch `dual-boot`) is not compatible with this one: changing over needs a full 
 ## How it switches
 
 - Both firmwares, built with `DUAL_BOOT_SELECTOR`, set the next boot back to the factory partition at start.
-- Power-on, crash or brownout: the selector shows a 5 s menu (1/m Meshtastic, 2/w WADAMESH, Enter or
+- Power-on, crash or brownout: the selector shows a 5 s menu (m Meshtastic, w WADAMESH, Enter or
   trackball press, trackball up/down), the last choice preselected, then boots it.
 - Software restart or deep-sleep wake (a firmware rebooting itself): straight on to the last choice, no menu.
 - Do not hold the trackball while powering on: it is GPIO0, the strapping pin (download mode).
